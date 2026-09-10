@@ -19,6 +19,7 @@ dependencies = [
     "langgraph>=1.2.11",
     "langgraph-checkpoint>=4.2.0",
     "langsmith>=0.11.2",
+    "mcp>=2.2.0",
     "pygraphviz>=2.0.1",
     "python-dotenv>=1.2.3",
 ]

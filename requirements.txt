@@ -7,3 +7,4 @@ langgraph-checkpoint
 langsmith
 python-dotenv
 langchain-tavily
+mcp
