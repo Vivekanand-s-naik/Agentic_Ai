@@ -8,4 +8,5 @@ langsmith
 python-dotenv
 langchain-tavily
 mcp
-
+PyPDF
+PyMuPDF
