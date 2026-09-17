@@ -17,6 +17,7 @@ dependencies = [
     "langchain-openai>=1.6.0",
     "langchain-openrouter>=0.2.8",
     "langchain-tavily>=0.2.18",
+    "langchain-text-splitters>=1.1.2",
     "langgraph>=1.2.11",
     "langgraph-checkpoint>=4.2.0",
     "langsmith>=0.11.2",
