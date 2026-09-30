@@ -73,3 +73,4 @@ coverage.xml
 # LangChain / LangSmith / Agent logs & traces
 .langchain/
 *.log
+RAG/vector_store/
