@@ -33,6 +33,7 @@ dependencies = [
     "rapidocr>=3.9.2",
     "scikit-learn>=1.9.1",
     "sentence-transformers>=6.0.1",
+    "typesense>=2.0.0",
     "unstructured>=0.27.5",
 ]
 
