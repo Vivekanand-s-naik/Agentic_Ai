@@ -10,11 +10,11 @@ from pathlib import Path
 def load_all_docs(data_dir: str)->List[Any]:
     data_path = Path(data_dir).resolve()
     
-    pdf_files = data_path.rglob("*.pdf")
-    docx_files = data_path.rglob("*.docx")
-    txt_files = data_path.rglob("*.txt")
-    json_files = data_path.rglob("*.json")
-    excel_files = data_path.rglob("*.xlsx")
+    pdf_files = list(data_path.rglob("*.pdf"))
+    docx_files = list(data_path.rglob("*.docx"))
+    txt_files = list(data_path.rglob("*.txt"))
+    json_files = list(data_path.rglob("*.json"))
+    excel_files = list(data_path.rglob("*.xlsx"))
     
     documents = []
 
