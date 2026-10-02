@@ -1,3 +1,6 @@
+import warnings
+
+warnings.filterwarnings("ignore")
 from langchain_community.document_loaders import PyMuPDFLoader, Docx2txtLoader, TextLoader, JSONLoader
 from langchain_community.document_loaders.excel import UnstructuredExcelLoader
 
@@ -6,12 +9,12 @@ from pathlib import Path
 
 def load_all_docs(data_dir: str)->List[Any]:
     data_path = Path(data_dir).resolve()
-
-    pdf_files = data_path.rglob("**/*.pdf")
-    docx_files = data_path.rglob("**/*.docx")
-    txt_files = data_path.rglob("**/*.txt")
-    json_files = data_path.rglob("**/*.json")
-    excel_files = data_path.rglob("**/*.csv")
+    
+    pdf_files = data_path.rglob("*.pdf")
+    docx_files = data_path.rglob("*.docx")
+    txt_files = data_path.rglob("*.txt")
+    json_files = data_path.rglob("*.json")
+    excel_files = data_path.rglob("*.xlsx")
     
     documents = []
 
@@ -35,7 +38,7 @@ def load_all_docs(data_dir: str)->List[Any]:
         
     # Load json file
     for json in json_files:
-        json_loader = JSONLoader(str(json))
+        json_loader = JSONLoader(str(json), jq_schema=".", text_content=False)
         loaded = json_loader.load()
         documents.extend(loaded)    
     # load excel file
@@ -46,4 +49,5 @@ def load_all_docs(data_dir: str)->List[Any]:
     
     return documents
 
-load_all_docs("../doc_files")
+res = load_all_docs("../doc_files")
+print(res)
