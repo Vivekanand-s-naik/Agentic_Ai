@@ -60,5 +60,7 @@ def load_all_docs(data_dir: str)->List[Any]:
     
     return documents
 
-# res = load_all_docs("./doc_files")
-# print(res)
+if __name__ == "__main__":
+    res = load_all_docs("./doc_files")
+    print(res)
+    
