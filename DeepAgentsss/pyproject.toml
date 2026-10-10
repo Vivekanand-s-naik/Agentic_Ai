@@ -1,0 +1,17 @@
+[project]
+name = "deepagentsss"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Vivekanand-s-naik", email = "vivekanadsnaik.iet@srinivasuniversity.edu.in" }
+]
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+deepagentsss = "deepagentsss:main"
+
+[build-system]
+requires = ["uv_build>=0.12.5,<0.13.0"]
+build-backend = "uv_build"
