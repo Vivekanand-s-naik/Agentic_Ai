@@ -2421,6 +2421,7 @@ version = "0.1.0"
 source = { editable = "." }
 dependencies = [
     { name = "chromadb" },
+    { name = "deepagents" },
     { name = "faiss-cpu" },
     { name = "ipykernel" },
     { name = "jq" },
@@ -2457,6 +2458,7 @@ dependencies = [
 [package.metadata]
 requires-dist = [
     { name = "chromadb", specifier = ">=1.5.9" },
+    { name = "deepagents", specifier = ">=0.7.23" },
     { name = "faiss-cpu", specifier = ">=1.15.1" },
     { name = "ipykernel", specifier = ">=7.3.0" },
     { name = "jq", specifier = ">=1.12.0" },
