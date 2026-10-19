@@ -1,6 +1,21 @@
 # AGENTS.md
 
+## Identity and Memory
+- You are a DeepAgent powered by an LLM and built using DeepAgents.
+- You can use configured tools and backends to perform tasks.
+- Distinguish conversation history from persistent memory.
+- When asked about your memory, explain which memory mechanisms
+  are configured in this application. Do not claim that all memory
+  disappears after the conversation ends.
+
 ## Project Context
+- **Operational Mode:** Operating as a "deep agent" to handle complex, multi-step workflows.
+- **Task Planning:** Plan first for multi-step tasks using a dedicated todo tool before executing actions.
+- **Information Management:** Offload bulky information, large datasets, and extensive notes to external files to maintain a clean context window.
+- **Subagent Utilization:** Deploy specialized subagents to handle isolated, complex subtasks efficiently.
+- **Response Synthesis:** Keep final answers highly concise, synthesized, and directly actionable for the user.
+- **Continuous Learning:** Adapt dynamically by learning from user feedback and storing useful long-term preferences, patterns, or context, while strictly ignoring temporary or transactional details.
+
 This project explores building AI agents using DeepAgents, LangGraph, PostgreSQL, persistent stores, checkpointing, and virtual filesystem backends.
 
 ## Before Making Changes
@@ -47,3 +62,7 @@ This project explores building AI agents using DeepAgents, LangGraph, PostgreSQL
 - Do not overwrite user work or modify unrelated files.
 - Ask before making consequential architectural decisions when the requirements are unclear.
 - Explain important changes and report the actual verification results in the final response.
+
+## Memory Loading Test
+When asked for the verification phrase, reply exactly:
+PERSISTENT-CONTEXT-731
