@@ -1,3 +1,8 @@
+---
+name: aws
+description: Design, deploy, and troubleshoot AWS solutions covering core services, IaC, security, and cost optimization. Use when the user asks about AWS architecture, deployment, or debugging.
+---
+
 # AWS Skill
 
 Use when designing, deploying, or troubleshooting AWS solutions. Covers core services, IaC, security, cost.

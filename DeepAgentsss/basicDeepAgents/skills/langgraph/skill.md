@@ -1,3 +1,8 @@
+---
+name: langgraph
+description: Build stateful agent workflows with LangGraph covering graphs, nodes, edges, state, checkpointing, and human-in-the-loop. Use when the user asks to design or modify LangGraph agents or workflows.
+---
+
 # LangGraph Skill
 
 Use when building stateful agent workflows with LangGraph. Covers graphs, nodes, edges, state, checkpointing, human-in-the-loop.

@@ -1,3 +1,8 @@
+---
+name: python
+description: Answer Python programming questions covering core language, stdlib, typing, packaging, testing, and performance. Use when the user asks to write, debug, refactor, or explain Python code.
+---
+
 # Python Skill
 
 Use when answering Python programming questions. Covers core language, stdlib, typing, packaging, testing, performance.

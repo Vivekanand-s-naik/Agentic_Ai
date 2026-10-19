@@ -1,3 +1,8 @@
+---
+name: kubernetes
+description: Deploy and manage containerized applications on Kubernetes covering workloads, networking, storage, config, security, and observability. Use when the user asks about K8s manifests, debugging, or cluster operations.
+---
+
 # Kubernetes Skill
 
 Use when deploying/managing containerized apps on Kubernetes. Covers workloads, networking, storage, config, security, observability.
