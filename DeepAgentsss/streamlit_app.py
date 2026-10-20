@@ -12,19 +12,24 @@ load_dotenv()
 def load_db():
     # function to get the checkpointer, store and pool
     db_uri = os.getenv("DB_URI")
-    pool = ConnectionPool(
-        conninfo=db_uri,
-        min_size=1,
-        max_size=100,
-        kwargs={"autocommit": True}
-    )
-    store = PostgresStore(pool)
-    checkpointer = PostgresSaver(pool)
-    store.setup()
-    checkpointer.setup()
-    return pool, store, checkpointer
+    try:
+        pool = ConnectionPool(
+            conninfo=db_uri,
+            min_size=1,
+            max_size=20,
+            timeout=5.0, 
+            kwargs={"autocommit": True}
+        )
+        store = PostgresStore(pool)
+        checkpointer = PostgresSaver(pool)
+        store.setup()
+        checkpointer.setup()
+        return pool, store, checkpointer
+    except Exception as e:
+        st.error(f" Initialization Error: {e}")
+        st.stop()
+        
 
-pool, store, checkpointer = load_db()
 
 st.title("🧠☠️ Deepagents Chatbot")
 
@@ -112,7 +117,8 @@ system_prompt = st.sidebar.text_area(
 )
 
 
-
+# Main agent logic and functionality
+pool, store, checkpointer = load_db()
 
 
 
