@@ -1,7 +1,8 @@
 import os
 import time
 from groq import Groq
-
+from dotenv import load_dotenv
+load_dotenv()
 # Ensure your free API key is configured in your environment
 # os.environ["GROQ_API_KEY"] = "gsk_..."
 
