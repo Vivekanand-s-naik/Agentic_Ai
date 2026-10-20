@@ -1,10 +1,14 @@
+from langchain_tavily import TavilySearch
 import streamlit as st
 import psycopg
 from psycopg_pool import ConnectionPool
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.store.postgres import PostgresStore
-
+from deepagents import create_deep_agent
+from deepagents.backends import StateBackend, StoreBackend, FilesystemBackend
+from deepagents.backends.utils import create_file_data
 from dotenv import load_dotenv
+from typing import Dict, Any
 import os
 load_dotenv()
 
@@ -13,22 +17,21 @@ def load_db():
     # function to get the checkpointer, store and pool
     db_uri = os.getenv("DB_URI")
     try:
-        pool = ConnectionPool(
+        _pool = ConnectionPool(
             conninfo=db_uri,
             min_size=1,
             max_size=20,
             timeout=5.0, 
             kwargs={"autocommit": True}
         )
-        store = PostgresStore(pool)
-        checkpointer = PostgresSaver(pool)
-        store.setup()
-        checkpointer.setup()
-        return pool, store, checkpointer
+        _store = PostgresStore(_pool)
+        _checkpointer = PostgresSaver(_pool)
+        _store.setup()
+        _checkpointer.setup()
+        return _pool, _store, _checkpointer
     except Exception as e:
         st.error(f" Initialization Error: {e}")
         st.stop()
-        
 
 
 st.title("🧠☠️ Deepagents Chatbot")
@@ -117,8 +120,72 @@ system_prompt = st.sidebar.text_area(
 )
 
 
+# load subagents if selected
+@st.cache_resource
+def web_search(query: str, max_results: int = 1, include_raw_content: bool = False) -> Dict[str, Any]:
+    """A Web searching tool that fetches the content from web network"""
+    return TavilySearch(
+        max_results=min(max_results, 1),
+        include_raw_content=False
+    ).invoke(input=query)
+    
+research_subagent = {
+    "name": "Research Subagent",
+    "description": "A subagents designed to research and provide results for a query",
+    "system_prompt": "You are a great Research Assistant",
+    "tools": [web_search],
+    "model": "groq:Openai/gpt-oss-20b"
+}
+subagents = [research_subagent]
+
 # Main agent logic and functionality
-pool, store, checkpointer = load_db()
+_pool, _store, _checkpointer = load_db()
+
+# create deepagent
+@st.cache_resource
+def get_deepagent(
+    curr_backend_id: str, 
+    curr_model_id: str, 
+    load_skills: bool, 
+    load_agent_contxt: bool, 
+    use_subagents: bool, 
+    system_prompt: str
+    ):
+    # initialize backend
+    match curr_backend_id:
+        case "StateBackend":
+            backend = StateBackend()
+        case "StoreBackend":
+            backend = StoreBackend(
+                namespace= lambda rt: ("deepagent_system", rt.context.get("user_id", "default_user")),
+                store=_store
+            )
+        case "FileSystemBackend":
+            backend = FilesystemBackend(
+                root_dir=".",
+                virtual_mode=True
+            )
+    
+    agent = create_deep_agent(
+        model=curr_model_id,
+        backend=backend,
+        subagents= subagents if use_subagents else None,
+        skills=["/skills/"] if load_skills else None,
+        memory=["/projects/AGENTS.md"] if load_agent_contxt else None,
+        system_prompt=system_prompt,
+        checkpointer=_checkpointer
+    )
+    return agent
+    
+
+agent = get_deepagent(
+    active_backend_id,
+    active_model_id,
+    skills,
+    load_context,
+    subagents,
+    system_prompt
+)
 
 
 
@@ -131,10 +198,7 @@ pool, store, checkpointer = load_db()
 
 
 
-
-
-
-name = st.text_input("Enter your name")
+name = st.text_input("Ask me anything - research, code, AWS, LangGraph ...")
 
 if st.button("Submit"):
     st.success(f"Hello, {name}!")
