@@ -1,13 +1,20 @@
 from langchain_tavily import TavilySearch
 import streamlit as st
+
+# Database & Storage constructs
 import psycopg
 from psycopg_pool import ConnectionPool
 from langgraph.checkpoint.postgres import PostgresSaver
 from langgraph.store.postgres import PostgresStore
+
+# Deepagent constructs
 from deepagents import create_deep_agent
 from deepagents.backends import StateBackend, StoreBackend, FilesystemBackend
 from deepagents.backends.utils import create_file_data
+
+
 from dotenv import load_dotenv
+from pathlib import Path
 from typing import Dict, Any
 import os
 load_dotenv()
@@ -32,19 +39,55 @@ def load_db():
     except Exception as e:
         st.error(f" Initialization Error: {e}")
         st.stop()
+_pool, _store, _checkpointer = load_db()
 
+# utility function to upload skills to store 
+@st.cache_resource
+def upload_skills_to_store(skills_dir: str):
+    base_path = Path(skills_dir)
+    if not base_path.exists() or not base_path.is_dir():
+        print("Skills directory not found!")
+        return
+
+    for p in base_path.rglob("*"):
+        if p.is_file() and p.name.lower() == "skill.md":
+            skill_folder = p.parent.relative_to(base_path).as_posix()
+            virtual_path = f"/skills/{skill_folder}/SKILL.md"
+            
+            # CRITICAL: StoreBackend expects values to be dictionaries containing JSON-serializable keys
+            # Instead of create_file_data(), put plain text contents into the DB
+            _store.put(
+                namespace=namespace,
+                key=virtual_path,
+                value={"text": p.read_text("utf-8")} 
+            )
+            print(f"Uploaded {virtual_path} directly to PostgresStore database.")
+
+# utility function to upload agents.md file (memory)
+def upload_context_file_to_store(file_path: str, virtual_key: str):
+    path = Path(file_path)
+    if not path.exists():
+        print(f"Warning: Local file {file_path} not found!")
+        return
+
+    _store.put(
+        namespace=namespace,
+        key=virtual_key,
+        value={"text": path.read_text("utf-8")}
+    )
+    print(f"Successfully uploaded {file_path} to store as virtual path: '{virtual_key}'")
 
 st.title("🧠☠️ Deepagents Chatbot")
-
+user_id = "1"
 st.write("Planning . Virtual file system . Context engineering (AGENTS.md + memory) . Skills . Subagents (incl. structured output) . Swappable backends . Thread memory via checkpointer")
 
 # Sidebar
 st.sidebar.header("Agent COnfigurations")
-
+st.sidebar.caption(f"user-Id : {user_id}")
 model_mapping = {
-    "Alibaba Qwen 3.8 27B (Fast & Multimodal)": "qwen/qwen3.8-27b",
-    "OpenAI GPT-OSS 20B (Standard Reasoning)": "openai/gpt-oss-20b",
-    "OpenAI GPT-OSS 120B (High Reasoning)": "openai/gpt-oss-120b"
+    "Alibaba Qwen 3.8 27B (Fast & Multimodal)": "groq:qwen/qwen3.8-27b",
+    "OpenAI GPT-OSS 20B (Standard Reasoning)": "groq:openai/gpt-oss-20b",
+    "OpenAI GPT-OSS 120B (High Reasoning)": "groq:openai/gpt-oss-120b"
 }
 
 selected_model_name = st.sidebar.selectbox(
@@ -78,12 +121,19 @@ load_context = st.sidebar.checkbox(
     value=True,
     help="Load project instructions and memory context."
 )
+if load_context:
+    upload_context_file_to_store(
+        file_path="projects/AGENTS.md", 
+        virtual_key="/projects/AGENTS.md"
+    )
 
 skills = st.sidebar.checkbox(
     "Skills (/skills/)",
     value=True,
     help="Load reusable skills for the agent."
 )
+if skills:
+    upload_skills_to_store("skills")
 
 subagents = st.sidebar.checkbox(
     "Subagents",
@@ -139,10 +189,8 @@ research_subagent = {
 subagents = [research_subagent]
 
 # Main agent logic and functionality
-_pool, _store, _checkpointer = load_db()
 
 # create deepagent
-@st.cache_resource
 def get_deepagent(
     curr_backend_id: str, 
     curr_model_id: str, 
@@ -152,6 +200,7 @@ def get_deepagent(
     system_prompt: str
     ):
     # initialize backend
+    backend = None
     match curr_backend_id:
         case "StateBackend":
             backend = StateBackend()
@@ -188,18 +237,21 @@ agent = get_deepagent(
 )
 
 
-
-
-
-
-
-
-
-
-
-
-name = st.text_input("Ask me anything - research, code, AWS, LangGraph ...")
-
+query = st.text_input("Ask me anything - research, code, AWS, LangGraph ...")
 if st.button("Submit"):
-    st.success(f"Hello, {name}!")
+    st.success(f"Thinking")
+    result = agent.invoke({
+        "messages": [
+            {
+            "role": "user", 
+            "content": query
+            }
+        ]
+    },
+    config={"configurable": {
+        "thread_id": "10",
+        "user_id": user_id
+        }}
+    )
+    st.write(result["messages"][-1].content)
 st.caption(f"Selected model:{active_model_id}")
