@@ -1,5 +1,30 @@
-
 import streamlit as st
+import psycopg
+from psycopg_pool import ConnectionPool
+from langgraph.checkpoint.postgres import PostgresSaver
+from langgraph.store.postgres import PostgresStore
+
+from dotenv import load_dotenv
+import os
+load_dotenv()
+
+@st.cache_resource
+def load_db():
+    # function to get the checkpointer, store and pool
+    db_uri = os.getenv("DB_URI")
+    pool = ConnectionPool(
+        conninfo=db_uri,
+        min_size=1,
+        max_size=100,
+        kwargs={"autocommit": True}
+    )
+    store = PostgresStore(pool)
+    checkpointer = PostgresSaver(pool)
+    store.setup()
+    checkpointer.setup()
+    return pool, store, checkpointer
+
+pool, store, checkpointer = load_db()
 
 st.title("🧠☠️ Deepagents Chatbot")
 
