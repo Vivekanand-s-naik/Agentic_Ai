@@ -40,9 +40,10 @@ def load_db():
         st.error(f" Initialization Error: {e}")
         st.stop()
 _pool, _store, _checkpointer = load_db()
+user_id = "2"
+namespace = ("deepagent_system", user_id)
 
 # utility function to upload skills to store 
-@st.cache_resource
 def upload_skills_to_store(skills_dir: str):
     base_path = Path(skills_dir)
     if not base_path.exists() or not base_path.is_dir():
@@ -53,13 +54,13 @@ def upload_skills_to_store(skills_dir: str):
         if p.is_file() and p.name.lower() == "skill.md":
             skill_folder = p.parent.relative_to(base_path).as_posix()
             virtual_path = f"/skills/{skill_folder}/SKILL.md"
-            
-            # CRITICAL: StoreBackend expects values to be dictionaries containing JSON-serializable keys
-            # Instead of create_file_data(), put plain text contents into the DB
+
             _store.put(
                 namespace=namespace,
                 key=virtual_path,
-                value={"text": p.read_text("utf-8")} 
+                value=create_file_data(
+                    p.read_text(encoding="utf-8")
+                )
             )
             print(f"Uploaded {virtual_path} directly to PostgresStore database.")
 
@@ -73,12 +74,14 @@ def upload_context_file_to_store(file_path: str, virtual_key: str):
     _store.put(
         namespace=namespace,
         key=virtual_key,
-        value={"text": path.read_text("utf-8")}
+        value=create_file_data(
+            path.read_text(encoding="utf-8")
+        )
     )
     print(f"Successfully uploaded {file_path} to store as virtual path: '{virtual_key}'")
 
 st.title("🧠☠️ Deepagents Chatbot")
-user_id = "1"
+
 st.write("Planning . Virtual file system . Context engineering (AGENTS.md + memory) . Skills . Subagents (incl. structured output) . Swappable backends . Thread memory via checkpointer")
 
 # Sidebar
@@ -108,8 +111,7 @@ backend_mapping = {
 }
 active_backend = st.sidebar.radio(
     label="Select the backend(where the data is stored and managed)",
-    options=list(backend_mapping.keys()),
-    index=0
+    options=list(backend_mapping.keys())
 )
 
 active_backend_id = backend_mapping[active_backend]
@@ -171,7 +173,6 @@ system_prompt = st.sidebar.text_area(
 
 
 # load subagents if selected
-@st.cache_resource
 def web_search(query: str, max_results: int = 1, include_raw_content: bool = False) -> Dict[str, Any]:
     """A Web searching tool that fetches the content from web network"""
     return TavilySearch(
@@ -186,7 +187,7 @@ research_subagent = {
     "tools": [web_search],
     "model": "groq:Openai/gpt-oss-20b"
 }
-subagents = [research_subagent]
+subagents_list = [research_subagent]
 
 # Main agent logic and functionality
 
@@ -206,10 +207,10 @@ def get_deepagent(
             backend = StateBackend()
         case "StoreBackend":
             backend = StoreBackend(
-                namespace= lambda rt: ("deepagent_system", rt.context.get("user_id", "default_user")),
+                namespace= lambda _rt:namespace,
                 store=_store
             )
-        case "FileSystemBackend":
+        case "FilesystemBackend":
             backend = FilesystemBackend(
                 root_dir=".",
                 virtual_mode=True
@@ -218,7 +219,7 @@ def get_deepagent(
     agent = create_deep_agent(
         model=curr_model_id,
         backend=backend,
-        subagents= subagents if use_subagents else None,
+        subagents= subagents_list if use_subagents else None,
         skills=["/skills/"] if load_skills else None,
         memory=["/projects/AGENTS.md"] if load_agent_contxt else None,
         system_prompt=system_prompt,
@@ -236,22 +237,36 @@ agent = get_deepagent(
     system_prompt
 )
 
+# Messaging logic 
+if "messages" not in st.session_state:
+    st.session_state.messages = []
+
+# Re-render past conversation history logs every time the page scripts reload
+for msg in st.session_state.messages:
+    with st.chat_message(msg["role"]):
+        st.markdown(msg["content"])
+
 
 query = st.text_input("Ask me anything - research, code, AWS, LangGraph ...")
 if st.button("Submit"):
-    st.success(f"Thinking")
-    result = agent.invoke({
-        "messages": [
-            {
-            "role": "user", 
-            "content": query
-            }
-        ]
-    },
-    config={"configurable": {
-        "thread_id": "10",
-        "user_id": user_id
-        }}
-    )
-    st.write(result["messages"][-1].content)
+    if query:
+        # save human message
+        st.session_state.messages.append({"role": "user", "content": query})
+        st.success(f"Thinking")
+        result = agent.invoke({
+            "messages": [
+                {
+                "role": "user", 
+                "content": query
+                }
+            ]
+        },
+        config={"configurable": {
+            "thread_id": "12",
+            "user_id": user_id
+            }}
+        )
+        output_text = result["messages"][-1].content
+        st.session_state.messages.append({"role": "assistant", "content": output_text})
+        st.rerun()
 st.caption(f"Selected model:{active_model_id}")
