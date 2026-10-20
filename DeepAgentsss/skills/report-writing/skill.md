@@ -1,5 +1,5 @@
 ---
-name: report_writing
+name: report-writing
 description: Produce structured, clear, actionable final reports and answers with headings, bullets, code blocks, and tables. Use when generating final user-facing reports or answers.
 ---
 

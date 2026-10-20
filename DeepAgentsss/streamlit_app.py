@@ -1,3 +1,4 @@
+from langchain_groq import ChatGroq
 from langchain_tavily import TavilySearch
 import streamlit as st
 
@@ -40,7 +41,7 @@ def load_db():
         st.error(f" Initialization Error: {e}")
         st.stop()
 _pool, _store, _checkpointer = load_db()
-user_id = "2"
+user_id = "user-1"
 namespace = ("deepagent_system", user_id)
 
 # utility function to upload skills to store 
@@ -88,9 +89,9 @@ st.write("Planning . Virtual file system . Context engineering (AGENTS.md + memo
 st.sidebar.header("Agent COnfigurations")
 st.sidebar.caption(f"user-Id : {user_id}")
 model_mapping = {
-    "Alibaba Qwen 3.8 27B (Fast & Multimodal)": "groq:qwen/qwen3.8-27b",
-    "OpenAI GPT-OSS 20B (Standard Reasoning)": "groq:openai/gpt-oss-20b",
-    "OpenAI GPT-OSS 120B (High Reasoning)": "groq:openai/gpt-oss-120b"
+    "Alibaba Qwen 3.8 27B (Fast & Multimodal)": "qwen/qwen3.8-27b",
+    "OpenAI GPT-OSS 20B (Standard Reasoning)": "openai/gpt-oss-20b",
+    "OpenAI GPT-OSS 120B (High Reasoning)": "openai/gpt-oss-120b"
 }
 
 selected_model_name = st.sidebar.selectbox(
@@ -160,12 +161,7 @@ st.sidebar.divider()
 system_prompt = st.sidebar.text_area(
     "System prompt",
     placeholder="""
-    You are an expert Al assistant and
-    researcher. You conduct thorough
-    research using your internet_search
-    tool when needed, plan multi-step
-    work with write_todos, offload bulky
-    content to files, use your skills when a
+You are an assistant. For 'research' requests, call Research Subagent with ONLY the topic. Keep replies short.
     """,
     height=150,
     help="Define the agent's behavior and instructions."
@@ -185,7 +181,7 @@ research_subagent = {
     "description": "A subagents designed to research and provide results for a query",
     "system_prompt": "You are a great Research Assistant",
     "tools": [web_search],
-    "model": "groq:Openai/gpt-oss-20b"
+    "model": ChatGroq(model=active_model_id, max_tokens=400)
 }
 subagents_list = [research_subagent]
 
@@ -215,15 +211,19 @@ def get_deepagent(
                 root_dir=".",
                 virtual_mode=True
             )
-    
-    agent = create_deep_agent(
+    model = ChatGroq(
         model=curr_model_id,
+        max_tokens=800 
+    )
+    agent = create_deep_agent(
+        model= model, #f"groq:{curr_model_id}",
         backend=backend,
         subagents= subagents_list if use_subagents else None,
         skills=["/skills/"] if load_skills else None,
         memory=["/projects/AGENTS.md"] if load_agent_contxt else None,
         system_prompt=system_prompt,
-        checkpointer=_checkpointer
+        checkpointer=_checkpointer,
+    
     )
     return agent
     
@@ -259,10 +259,11 @@ if st.button("Submit"):
                 "role": "user", 
                 "content": query
                 }
-            ]
+            ],
+            "skills_metadata": None,
         },
         config={"configurable": {
-            "thread_id": "12",
+            "thread_id": "9",
             "user_id": user_id
             }}
         )
