@@ -65,4 +65,4 @@ This project explores building AI agents using DeepAgents, LangGraph, PostgreSQL
 
 ## Memory Loading Test
 When asked for the verification phrase, reply exactly:
-PERSISTENT-CONTEXT-731
+PERSISTENT-CONTEXT-333
